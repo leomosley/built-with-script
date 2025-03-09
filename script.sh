@@ -6,8 +6,14 @@ OUTPUT_FILE="output.csv"
 # Write CSV header
 echo "Domain,Readme Domain,Plugin Version" > "$OUTPUT_FILE"
 
-# Read the input CSV line by line, skipping the header
-sed 1d "$INPUT_FILE" | while IFS=',' read -r domain location _; do
+# Function to process each line
+process_line() {
+  local domain="$1"
+  local location="$2"
+  local line_number="$3"
+
+  echo "Processing line: $line_number, Domain: $domain, Location: $location"
+
   # Use "Domain" column first, fallback to "Location on Site" if not a valid domain
   base_url="${domain:-$location}"
 
@@ -30,5 +36,17 @@ sed 1d "$INPUT_FILE" | while IFS=',' read -r domain location _; do
 
     # Write to output CSV only if readme.txt is fetched
     echo "$base_url,$readme_domain,$version" >> "$OUTPUT_FILE"
+    echo "  Successfully processed line: $line_number"
+  else
+    echo "  Failed to fetch readme.txt for line: $line_number"
   fi
+}
+
+# Read the input CSV line by line, skipping the header
+line_number=1
+sed 1d "$INPUT_FILE" | while IFS=',' read -r domain location _; do
+  process_line "$domain" "$location" "$line_number"
+  line_number=$((line_number + 1))
 done
+
+echo "Finished processing all lines."
